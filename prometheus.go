@@ -2,6 +2,7 @@ package fasthttpprom
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/fasthttp/router"
@@ -77,7 +78,7 @@ func (p *Prometheus) registerMetrics(subsystem string) {
 			Help:      "request latencies",
 			Buckets:   []float64{.005, .01, .02, 0.04, .06, 0.08, .1, 0.15, .25, 0.4, .6, .8, 1, 1.5, 2, 3, 5},
 		},
-		[]string{"code", "path"},
+		[]string{"code", "methode", "route"},
 	)
 
 	prometheus.Register(p.reqDur)
@@ -113,8 +114,7 @@ func (p *Prometheus) HandlerFunc() fasthttp.RequestHandler {
 
 		status := strconv.Itoa(ctx.Response.StatusCode())
 		elapsed := float64(time.Since(start)) / float64(time.Second)
-		ep := string(ctx.Method()) + "_" + uri
-		p.reqDur.WithLabelValues(status, ep).Observe(elapsed)
+		p.reqDur.WithLabelValues(status, string(ctx.Method()), strings.ReplaceAll(uri, "/", "_")).Observe(elapsed)
 	}
 }
 
